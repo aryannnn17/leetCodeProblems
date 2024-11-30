@@ -1,41 +1,40 @@
 class Solution {
-    map<int, vector<int>> adj;
-    map<int, int> inDeg, outDeg;
-    int getNode() {
-        int startNode;
-        for (auto& [node, Deg] : outDeg) {
-            if (Deg - inDeg[node] == 1)
-                return node;
-            if (Deg > 0)
-                startNode = node;
-        }
-        return startNode;
-    }
-    void getEulPath(int curr, vector<int>& eulPath) {
-        while (outDeg[curr]) {
-            outDeg[curr]--;
-            int next_node = adj[curr][outDeg[curr]];
-            getEulPath(next_node, eulPath);
-        }
-        eulPath.push_back(curr);
-    }
 public:
     vector<vector<int>> validArrangement(vector<vector<int>>& pairs) {
-        for (auto& pair : pairs) {
-            int start = pair[0], end = pair[1];
-            adj[start].push_back(end);
-            outDeg[start]++;
-            inDeg[end]++;
+        unordered_map<int, vector<int>> adj;
+        unordered_map<int, int> inDeg, outDeg;
+        for (auto& edge : pairs) {
+            int u = edge[0], v = edge[1];
+            adj[u].push_back(v);
+            outDeg[u]++;
+            inDeg[v]++;
         }
-        int startNode = getNode();
-        vector<int> eulPath;
-        getEulPath(startNode, eulPath);
+        int startNode = pairs[0][0];
+        for (auto& it : adj) {
+            int node = it.first;
+            if (outDeg[node] - inDeg[node] == 1) {
+                startNode = node;
+                break;
+            }
+        }
+        vector<int> eulerPath;
+        stack<int> st;
+        st.push(startNode);
+        while (!st.empty()) {
+            int curr = st.top();
+            if (!adj[curr].empty()) {
+                int ngbr = adj[curr].back();
+                adj[curr].pop_back();
+                st.push(ngbr);
+            } else {
+                eulerPath.push_back(curr);
+                st.pop();
+            }
+        }
+        reverse(begin(eulerPath), end(eulerPath));
         vector<vector<int>> ans;
-        for (int i = eulPath.size() - 1; i > 0; --i) {
-            vector<int> path;
-            path.push_back(eulPath[i]);
-            path.push_back(eulPath[i - 1]);
-            ans.push_back(path);
+        for (int i = 0; i < eulerPath.size() - 1; i++) {
+            ans.push_back({eulerPath[i], eulerPath[i + 1]});
         }
         return ans;
     }
